@@ -9,6 +9,7 @@ import seaborn as sn
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 
 # global settings
 CWD = os.path.abspath('.')
@@ -18,7 +19,7 @@ import streamlit_helper as st_help
 
 
 # set up path to access raw data and folder to store any results
-@st.cache(allow_output_mutation=True)
+#@st.cache(allow_output_mutation=True)
 def load_data(CWD):
     """ loads the data from a parquet file specified below
 
@@ -28,9 +29,8 @@ def load_data(CWD):
 
     """
 
-    folderpath_processed_data = CWD + '/writings/data_sample.parquet'
+    folderpath_processed_data = CWD + '/data_sample.parquet'
     df_raw = pd.read_parquet(folderpath_processed_data)
-
     return df_raw
 
 
@@ -47,7 +47,6 @@ def build_app():
 
     # Checkbox whether to show the raw dataframe
     st.markdown('---')
-
     # Streamlit Sidebar Layout
     st.sidebar.markdown('<font style="font-family: Helvetica; font-size:18pt" > Analysis specifications :pencil2: </font>', unsafe_allow_html=True)
     st.sidebar.markdown('<font style="font-family: Helvetica; font-size:12pt" > Change settings for explorative analysis </font>', unsafe_allow_html=True)
@@ -120,13 +119,12 @@ def build_app():
                                             'weekday',
                                             'is_prime_time',
                                             'channel_name',
-                                            'tv_position_im_block',
-                                            'tv_spotanzahl_im_block',
+                                            'spot_position_in_block',
+                                            'total_spots_in_block',
                                             'relative_spot_position',
-                                            'tv_spotlaenge',
+                                            'spotlength',
                                             #'audience',
                                             'brand_name',
-                                            'motiv_name'
                                             #'total_react_linear'
                                         ]
             select_options = features_to_include
@@ -134,7 +132,7 @@ def build_app():
             # that filtered option
             additional_filter = left.selectbox('Filter histogram by additional metric', options=select_options)
             title = 'Histogram for all observations'
-            filter_metrics = list(df_raw[additional_filter].drop_duplicates().sort_values())
+            filter_metrics = list(df[additional_filter].drop_duplicates().sort_values())
             filter_keep =  left.selectbox('Select desired filtering option', options=filter_metrics)
             grouped = left.checkbox('Display grouped raw data')
             fig_hist, fig_filtered_hist, df_grouped_sorted = st_help.create_histogram(df, additional_filter, filter_keep)
@@ -154,10 +152,10 @@ def build_app():
                                             'hour',
                                             'is_prime_time',
                                             'channel_name',
-                                            'tv_position_im_block',
-                                            'tv_spotanzahl_im_block',
+                                            'spot_position_in_block',
+                                            'total_spots_in_block',
                                             'relative_spot_position',
-                                            'tv_spotlaenge',
+                                            'spotlength',
                                             'audience',
                                             'day_time',
                                             'spot_position_at_edge',
@@ -179,8 +177,8 @@ def build_app():
                                             'weekday',
                                             'is_prime_time',
                                             'channel_name',
-                                            'tv_position_im_block',
-                                            'tv_spotanzahl_im_block',
+                                            'spot_position_in_block',
+                                            'total_spots_in_block',
                                             'relative_spot_position',
                                             'tv_spotlaenge',
                                             #'audience',
@@ -262,8 +260,8 @@ def build_app():
                                             'weekday',
                                             'is_prime_time',
                                             'channel_name',
-                                            'tv_position_im_block',
-                                            'tv_spotanzahl_im_block',
+                                            'spot_position_in_block',
+                                            'total_spots_in_block',
                                             'relative_spot_position',
                                             'tv_spotlaenge',
                                             #'audience',
@@ -303,8 +301,8 @@ def build_app():
                                             'hour',
                                             'is_prime_time',
                                             'channel_name',
-                                            'tv_position_im_block',
-                                            'tv_spotanzahl_im_block',
+                                            'spot_position_in_block',
+                                            'total_spots_in_block',
                                             'relative_spot_position',
                                             'tv_spotlaenge',
                                             'audience',
@@ -337,8 +335,8 @@ def build_app():
                                             'weekday',
                                             'is_prime_time',
                                             'channel_name',
-                                            'tv_position_im_block',
-                                            'tv_spotanzahl_im_block',
+                                            'spot_position_in_block',
+                                            'total_spots_in_block',
                                             'relative_spot_position',
                                             'tv_spotlaenge',
                                             #'audience',

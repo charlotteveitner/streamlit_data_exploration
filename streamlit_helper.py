@@ -9,7 +9,8 @@ import seaborn as sn
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-
+import pingouin as pg
+import matplotlib.pyplot as plt
 
 def make_pivot_table(df, show_total_numbers=False, index_columns=['is_prime_time'], value_columns=['audience','total_react_linear']):
     """ creates a pivot table for the given daraframe
@@ -84,10 +85,9 @@ def create_histogram(df_hist, additional_filter, filter_keep):
     """
 
     #df_hist['react_per_100_audience'] = 100*(df_hist['total_react_linear']/df_hist['audience'])
-    df_hist['is_prime_time'] = np.where(df_hist['is_prime_time']==1, 'prime', 'no_prime')
+    #df_hist['is_prime_time'] = np.where(df_hist['is_prime_time']==1, 'prime', 'no_prime')
     df_filtered_hist = df_hist.copy()
     # Explore Target variable total react total_react_linear
-
     df_grouped = df_filtered_hist.groupby(additional_filter, as_index=False).agg({'react_per_100_audience':[np.mean, np.std, np.max]})
     if additional_filter == 'weekday':
         cats = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -109,7 +109,7 @@ def create_histogram(df_hist, additional_filter, filter_keep):
         y= df_grouped_sorted['average'],
         histfunc='avg',
         name='Avg Reactions / 100 aud',
-        nbinsx=len(filter_metrics)+1
+        nbinsx=7
     ))
     fig_filter.add_trace(go.Scatter(
         name='Std dev',
@@ -171,7 +171,6 @@ def create_correlation_to_target_value(df_corr,feature_column_list, target_colum
             a table of different correlation metrics for the speicifc features & target value
     """
 
-    print(feature_column_list)
     if target_column in feature_column_list:
         feature_column_list.remove(target_column)
     list_of_dfs = []
@@ -180,7 +179,7 @@ def create_correlation_to_target_value(df_corr,feature_column_list, target_colum
             df_pg = pg.corr(x=df_corr[i], y=df_corr[target_column])
             df_pg.index = [i]
             list_of_dfs.append(df_pg)
-        except:
+        except Exception as e:
             print('correlation did not work for {}'.format(i))
     df_complete_corr = pd.concat(list_of_dfs, ignore_index=False)
     df_complete_corr = df_complete_corr[[
