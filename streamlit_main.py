@@ -33,7 +33,6 @@ def load_data(CWD):
     df_raw = pd.read_parquet(folderpath_processed_data)
     return df_raw
 
-
 def build_app():
     # Streamlit Layout
     st.beta_set_page_config(layout="wide")
@@ -43,6 +42,7 @@ def build_app():
     data_load_state = st.markdown('<font style="font-family: Helvetica; font-size:10pt" > :hourglass: Loading data... </font>', unsafe_allow_html=True)
     # Load the data from parquet file on hard drive
     df_raw = load_data(CWD)
+
     data_load_state.markdown('<font style="font-family: Helvetica; font-size:10pt" > :heavy_check_mark: Loading data...done! </font>', unsafe_allow_html=True)
 
     # Checkbox whether to show the raw dataframe
@@ -64,12 +64,15 @@ def build_app():
         if date_picker == 'All':
             df= df_raw
         elif date_picker == 'Pick Quarter':
-            quater_select = st.sidebar.multiselect('Quarters to be included', [1,2,3,4], [1,2,3,4])
             df_raw['quarter'] = df_raw.ad_timestamp.apply(lambda x: x.quarter)
+            quater_list = list(df_raw['quarter'].drop_duplicates())
+            quater_select = st.sidebar.multiselect('Quarters to be included', quater_list, quater_list)
             df = df_raw[df_raw.quarter.isin(quater_select)].drop(columns='quarter')
         elif date_picker == 'Pick Date Range':
-            start_date = st.sidebar.date_input('Start Date', pd.Timestamp(df_raw.ad_timestamp.min()))
-            end_date = st.sidebar.date_input('End Date', pd.Timestamp(df_raw.ad_timestamp.max()))
+            min_date = pd.Timestamp(df_raw.ad_timestamp.min())
+            max_date = pd.Timestamp(df_raw.ad_timestamp.max())
+            start_date = st.sidebar.date_input('Start Date', min_date)
+            end_date = st.sidebar.date_input('End Date', max_date)
             df = df_raw[(df_raw.ad_timestamp > (start_date - pd.DateOffset(days=0))) & (df_raw.ad_timestamp < (end_date + pd.DateOffset(days=1)))]
         elif date_picker == 'Last [X] months':
             last_months = st.sidebar.slider('Chose the number of months to go back', min_value=1, max_value=20, value=6, step=1)
@@ -91,7 +94,7 @@ def build_app():
                                     'hour',
                                     'channel_name',
                                     'relative_spot_position',
-                                    'tv_spotlaenge',
+                                    'spotlength',
                                     'brand_name'
                                   ]
             pivot_index_second_option = ['None'] + pivot_index_options.copy()
@@ -99,9 +102,9 @@ def build_app():
             pivot_index_second_option_updates = pivot_index_second_option#.remove(first_index)
             second_index = left.selectbox('Select a secondary column to use for pivot table', pivot_index_second_option_updates)
             show_total_numbers = left.checkbox('Show numbers for audience and reactions')
-            if second_index != 'None':
+            if second_index != 'None' and second_index != first_index:
                 index_columns = [first_index, second_index]
-            elif second_index == 'None':
+            elif second_index == 'None' or second_index == first_index:
                 index_columns = [first_index]
             pivot_show = st_help.make_pivot_table(
                                                 df=df,
@@ -180,7 +183,7 @@ def build_app():
                                             'spot_position_in_block',
                                             'total_spots_in_block',
                                             'relative_spot_position',
-                                            'tv_spotlaenge',
+                                            'spotlength',
                                             #'audience',
                                             'brand_name',
                                             'motiv_name'
@@ -201,17 +204,21 @@ def build_app():
 
         if date_picker == 'Pick Quarter':
             df_raw['quarter'] = df_raw.ad_timestamp.apply(lambda x: x.quarter)
-            quater_select1 = st.sidebar.multiselect('Quarters to be included [Timespan 1]', [1,2,3,4], [1,2])
+            quater_list = list(df_raw['quarter'].drop_duplicates())
+
+            quater_select1 = st.sidebar.multiselect('Quarters to be included [Timespan 1]', quater_list, quater_list)
             df1 = df_raw[df_raw.quarter.isin(quater_select1)].drop(columns='quarter')
-            quater_select2 = st.sidebar.multiselect('Quarters to be included [Timespan 2]', [1,2,3,4], [3,4])
+            quater_select2 = st.sidebar.multiselect('Quarters to be included [Timespan 2]', quater_list, quater_list)
             df2 = df_raw[df_raw.quarter.isin(quater_select2)].drop(columns='quarter')
 
         elif date_picker == 'Pick Date Range':
-            start_date1 = st.sidebar.date_input('Start Date [Timespan 1]', pd.Timestamp(df_raw.ad_timestamp.min()))
-            end_date1 = st.sidebar.date_input('End Date [Timespan 1]', pd.Timestamp('2019-12-31'))
+            min_date = pd.Timestamp(df_raw.ad_timestamp.min())
+            max_date = pd.Timestamp(df_raw.ad_timestamp.max())
+            start_date1 = st.sidebar.date_input('Start Date [Timespan 1]', min_date)
+            end_date1 = st.sidebar.date_input('End Date [Timespan 1]', max_date)
             df1 = df_raw[(df_raw.ad_timestamp > (start_date1 - pd.DateOffset(days=0))) & (df_raw.ad_timestamp < (end_date1 + pd.DateOffset(days=1)))]
-            start_date2 = st.sidebar.date_input('Start Date [Timespan 2]', pd.Timestamp('2020-01-01'))
-            end_date2 = st.sidebar.date_input('End Date [Timespan 2]', pd.Timestamp(df_raw.ad_timestamp.max()))
+            start_date2 = st.sidebar.date_input('Start Date [Timespan 2]', min_date)
+            end_date2 = st.sidebar.date_input('End Date [Timespan 2]', max_date)
             df2 = df_raw[(df_raw.ad_timestamp > (start_date2 - pd.DateOffset(days=0))) & (df_raw.ad_timestamp < (end_date2 + pd.DateOffset(days=1)))]
         show_what = st.sidebar.selectbox('Select a graph to see', ['Pivot table', 'Histogram', 'Correlation Matrix', 'Scatter Plot'])
 
@@ -223,7 +230,7 @@ def build_app():
                                     'hour',
                                     'channel_name',
                                     'relative_spot_position',
-                                    'tv_spotlaenge',
+                                    'spotlength',
                                     'brand_name'
                                   ]
             pivot_index_second_option = ['None'] + pivot_index_options.copy()
@@ -231,9 +238,9 @@ def build_app():
             pivot_index_second_option_updates = pivot_index_second_option#.remove(first_index)
             second_index = left.selectbox('Select a secondary column to use for pivot table', pivot_index_second_option_updates)
             show_total_numbers = left.checkbox('Show numbers for audience and reactions')
-            if second_index != 'None':
+            if second_index != 'None' and second_index != first_index:
                 index_columns = [first_index, second_index]
-            elif second_index == 'None':
+            elif second_index == 'None' or second_index == first_index:
                 index_columns = [first_index]
             middle.markdown('<font style="font-family: Helvetica; font-size:23pt"> **Timespan 1** </font>', unsafe_allow_html=True)
             pivot_show1 = st_help.make_pivot_table(
@@ -263,7 +270,7 @@ def build_app():
                                             'spot_position_in_block',
                                             'total_spots_in_block',
                                             'relative_spot_position',
-                                            'tv_spotlaenge',
+                                            'spotlength',
                                             #'audience',
                                             'brand_name',
                                             'motiv_name'
@@ -304,7 +311,7 @@ def build_app():
                                             'spot_position_in_block',
                                             'total_spots_in_block',
                                             'relative_spot_position',
-                                            'tv_spotlaenge',
+                                            'spotlength',
                                             'audience',
                                             'day_time',
                                             'spot_position_at_edge',
@@ -338,7 +345,7 @@ def build_app():
                                             'spot_position_in_block',
                                             'total_spots_in_block',
                                             'relative_spot_position',
-                                            'tv_spotlaenge',
+                                            'spotlength',
                                             #'audience',
                                             'brand_name',
                                             'motiv_name'
